@@ -1,8 +1,9 @@
 Ethereum Smart Contract Programming 101 Course (Ivan on Tech Blockchain Academy)
+[Solidity version 7]
 
-This is the solidity code developd during the course:
+This is the solidity code developed during the course:
 1. Bank & Government contract solidity assignment code.
-2. MultiSig Wallet project - see READ me in that directory for assignment brief.
+2. MultiSig Wallet project - for assignment brief see that directory's README file.
 
 Notes:
 i) Remix was used throughout the course (including for MultiSig Wallet project)
