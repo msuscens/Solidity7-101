@@ -32,5 +32,38 @@ Please post any questions and answers regarding the Multisig Wallet Project here
 https://forum.ivanontech.com/t/project-multisig-wallet/27222
 
 
+___________________________________________________________________________________
 
+ My Initial Thoughts / My Planning for development:
+ 
+ MultiSigWallet contract: Constructor
+    - X Owners (passed in as array of addresses)
+    - Y/X requiredSignatures (passed in as uint)
+    (setup above in construction of contract)
+    
+    - deposit function (to take funds from anyone)
+        Assume that all funds are kept together in one lump (ie. it won't record who contributes what funds!?)
+        
+    - createTransferRequest(toAddress, amount, reason?) onlyOwners
+        How are other owners notified of transfer requests - events? / transfer Request log? both!
+    - cancelTransferRequest : creator can cancel/delete
+
+    -   numberPendingTransferRequests : Returns number of open requests
+    -   getPendingTransferRequest(index) : Returns details of specic transfer requests
+    
+    - accceptTransferRequest(index) onlyOwners : Adds an approval vote to pending request, and triggers transfer if approval vote threshold reached
+    - declineTransferRequest(index) onlyOwners : Adds a not approved vote to pending request, and rejects request if approval vote threshold can no longer be reached
+    
+    
+    - getWalletBalance() - usefulfunction 
+    
+    Will need state variables for:
+    - owners : array of owner addresses  or a mapping of address to bool true if owner
+    - Struct type that holds requested transaction details - requestor, recipient, amount, possibly approversToDate (addresses[] or uint)??
+    - pendingApprovalRequests: array of  structs (requested transactions) - with array index being used as requestId
+    - openRequestsByOwner : mapping owner's address -> array of transfer request ids (uint[]) 
+    
+    - sentTransactions ? (possible nice to have, to keep a record of who approved sent transactions)
+    - rejectedTransactions ? (possible nice to have, similar to above - keep a record of who rejected proposed Txs)    
+    
  
