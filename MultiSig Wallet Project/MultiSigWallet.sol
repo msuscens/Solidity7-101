@@ -1,4 +1,3 @@
-pragma solidity 0.7.5;
 pragma abicoder v2;
 
 import "./MultiOwnable.sol";
@@ -8,7 +7,6 @@ contract MultiSigWallet is MultiOwnable, Approvable {
 
     // STATE VARIABLES
     address internal _walletCreator;
-    uint internal _minTxApprovals;
 
     // - Struct type that holds requested transaction details - requestor, recipient, amount, possibly approversToDate (addresses[] or uint)??
     // - pendingApprovalRequests: array of  structs (requested transactions) - with array index being used as requestId
@@ -24,7 +22,6 @@ contract MultiSigWallet is MultiOwnable, Approvable {
         Approvable(owners, minTxApprovals)
     {
         _walletCreator = msg.sender;
-        _minTxApprovals = minTxApprovals;
     }
     
     function deposit() external payable returns (uint amountDeposited) {
