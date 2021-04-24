@@ -1,4 +1,4 @@
- solidity 0.7.5;
+pragma solidity 0.7.5;
 
 contract MultiOwnable {
     
@@ -24,5 +24,5 @@ contract MultiOwnable {
     function getOwners() external view returns (address[] memory owners){
         return _owners;
     }
-
+      
 }
