@@ -9,7 +9,6 @@ contract MultiSigWallet is MultiOwnable, Approvable {
     // STATE VARIABLES
     address internal _walletCreator;
 
-    // - Struct type that holds requested transaction details - requestor, recipient, amount, possibly approversToDate (addresses[] or uint)??
     struct TxRequest {
         address requestor;
         address recipient;
@@ -19,7 +18,7 @@ contract MultiSigWallet is MultiOwnable, Approvable {
         uint id;    // request id
     }
     
-    TxRequest[] internal _pendingApprovals;          // array index is request id
+    TxRequest[] internal _pendingApprovals;                             // array index is request id
     mapping (uint => address) internal _txRequestors;
     mapping (address => mapping (uint => bool)) internal _txApprovals;  // approver => (requestId => approved?)
     
@@ -43,8 +42,13 @@ contract MultiSigWallet is MultiOwnable, Approvable {
     }
     
         
-    function createTransferRequest(address toAddress, string memory reason, uint amount) public onlyAnOwner(msg.sender) returns (uint txId) {
+    function createTransferRequest(address toAddress, string memory reason, uint amount)
+        public
+        onlyAnOwner(msg.sender)
+        returns (uint txId)
+    {
         require(toAddress != address(0), "Recipient is address 0!");
+        require(toAddress != address(this), "Recipeint is this wallet!");
         require(amount > 0, "Transfer amount is 0!");
         
         TxRequest memory newRequest = TxRequest(msg.sender, toAddress, reason, amount, 0, _pendingApprovals.length);
@@ -56,27 +60,17 @@ contract MultiSigWallet is MultiOwnable, Approvable {
     
 
     function approveTransferRequest(uint requestId) public onlyAnApprover(msg.sender) {
-        // Adds an approval vote to pending request, and triggers transfer if approval vote threshold reached
         require(requestId < _pendingApprovals.length, "No such request id!");
         require(_txApprovals[msg.sender][requestId] != true, "You've already approved!");
+        require(address(this).balance >= _pendingApprovals[requestId].amount,
+            "Insufficient funds for payment!"); //NB.Gas cost not accounted for
 
         _txApprovals[msg.sender][requestId] = true;
         _pendingApprovals[requestId].approvals++;
         
         if (_pendingApprovals[requestId].approvals >= _minApprovals) {
-            
-            address sendTo = _pendingApprovals[requestId].recipient;
-            uint amountInWei = _pendingApprovals[requestId].amount;
-
-            _deleteTransferRequest(requestId);
-            
-            // Make the transfer
-            // *** TODO ***
-            
-            // Emit a transferSent event 
-            emit TransferSent(sendTo, amountInWei);
+            _makeApprovedTransfer(requestId);
         }
-        // mapping (address => mapping (uint => bool)) internal _txApprovals;  // approver => (requestId => approved?)
     }
     
     
@@ -88,7 +82,7 @@ contract MultiSigWallet is MultiOwnable, Approvable {
     }
     
     
-    // Useful public functions for testing during development
+    // Useful development testing (public) functions
     function getTransferRequest(uint id) public view returns (TxRequest memory transferRequest) {
         return _pendingApprovals[id];
     }
@@ -102,15 +96,32 @@ contract MultiSigWallet is MultiOwnable, Approvable {
     }
     
     function totalTransferRequests() public view returns (uint) {
-        return _pendingApprovals.length;    // note includes deleted requests (i.e cancelled and approved requests)
+        return _pendingApprovals.length;    // NB. Includes deleted requests (i.e cancelled and approved requests)
     }
     
     
-    // Internal and Private functions
+    // Internal and private functions
     
     function _deleteTransferRequest(uint requestId) internal {
         delete _pendingApprovals[requestId];
         delete _txRequestors[requestId];
+    }
+    
+    
+    function _makeApprovedTransfer(uint requestId) internal {
+        address sendTo = _pendingApprovals[requestId].recipient;
+        uint amountInWei = _pendingApprovals[requestId].amount;
+        _deleteTransferRequest(requestId);
+
+        _transfer(sendTo, amountInWei);
+            
+        emit TransferSent(sendTo, amountInWei);
+    }
+            
+    
+    function _transfer(address sendTo, uint amountInWei) internal {
+        address payable to = address(uint160(sendTo));
+        to.transfer(amountInWei);
     }
     
 }
