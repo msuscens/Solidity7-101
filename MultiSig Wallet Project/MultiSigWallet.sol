@@ -23,6 +23,15 @@ contract MultiSigWallet is MultiOwnable, Approvable {
     mapping (address => mapping (uint => bool)) internal _txApprovals;
         // approver => (requestId => approval?)
     
+    event DepositReceived(uint amount); 
+    event TxRequestCreated(
+        uint id,
+        uint amount,
+        address to,
+        address requestor,
+        string reason
+    );
+    event TxApprovalGiven(uint id, uint approvals, address lastApprover);
     event TransferSent(address to, uint amount); 
 
     // FUNCTIONS
@@ -36,9 +45,9 @@ contract MultiSigWallet is MultiOwnable, Approvable {
     }
     
     
-    function deposit() external payable returns (uint amountDeposited) {
+    function deposit() external payable {
         require (msg.value > 0, "No funds sent to deposit!");
-        return(msg.value);
+        emit DepositReceived(msg.value);
     }
     
         
@@ -64,8 +73,16 @@ contract MultiSigWallet is MultiOwnable, Approvable {
                 0,
                 _txRequests.length
             );
+
         _txRequests.push(newRequest);
         _txRequestors[newRequest.id] = msg.sender;
+        
+        emit TxRequestCreated(
+            newRequest.id,
+            newRequest.amount,
+            newRequest.recipient,
+            newRequest.requestor,
+            newRequest.reason);
 
         return newRequest.id;
     }
@@ -76,6 +93,7 @@ contract MultiSigWallet is MultiOwnable, Approvable {
         onlyAnApprover
     {
         require(requestId < _txRequests.length, "No such request id!");
+        require(_txRequests[requestId].amount > 0, "No transfer to approve!");
         require(
             _txApprovals[msg.sender][requestId] != true,
             "Already given approval!"
@@ -87,6 +105,8 @@ contract MultiSigWallet is MultiOwnable, Approvable {
 
         _txApprovals[msg.sender][requestId] = true;
         _txRequests[requestId].approvals++;
+        
+        emit TxApprovalGiven(requestId, _txRequests[requestId].approvals, msg.sender);
         
         if (_txRequests[requestId].approvals >= _minApprovals) {
             _makeApprovedTransfer(requestId);
