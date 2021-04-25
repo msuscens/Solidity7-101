@@ -5,8 +5,8 @@ contract MultiOwnable {
     address[] internal _owners;
     mapping (address => bool) internal _ownership;
 
-    modifier onlyAnOwner(address candidate) {
-        require(_ownership[candidate], "Not an owner!");
+    modifier onlyAnOwner {
+        require(_ownership[msg.sender], "Not an owner!");
         _;
     }
     
@@ -21,6 +21,7 @@ contract MultiOwnable {
         assert(_owners.length == owners.length);
     }
     
+    // Functions for Developer testing 
     function getOwners() external view returns (address[] memory owners){
         return _owners;
     }
